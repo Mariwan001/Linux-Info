@@ -1,6 +1,11 @@
 #!/bin/bash
 
-# Colors
+# ═══════════════════════════════════════════════════════════════════
+#  LINUX-INFO v2.0 - The Ultimate Linux Distribution Explorer
+#  Created by MARIWAN
+# ═══════════════════════════════════════════════════════════════════
+
+# Colors & Effects
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -10,37 +15,213 @@ CYAN='\033[0;36m'
 WHITE='\033[1;37m'
 BOLD='\033[1m'
 DIM='\033[2m'
+BLINK='\033[5m'
+REVERSE='\033[7m'
+UNDERLINE='\033[4m'
 NC='\033[0m'
 
-# Function to clear screen
-clear_screen() {
+# Advanced color gradients
+NEON_PINK='\033[38;5;198m'
+NEON_BLUE='\033[38;5;51m'
+NEON_GREEN='\033[38;5;46m'
+NEON_PURPLE='\033[38;5;141m'
+ORANGE='\033[38;5;208m'
+GOLD='\033[38;5;220m'
+
+# Terminal dimensions
+TERM_WIDTH=$(tput cols)
+TERM_HEIGHT=$(tput lines)
+
+# Animation speed
+FAST=0.005
+MEDIUM=0.02
+SLOW=0.05
+
+# Clear screen with fade effect
+clear_fade() {
+    for i in {1..10}; do
+        tput cup 0 0
+        echo -e "${DIM}"
+        clear
+        sleep 0.02
+    done
+}
+
+# Rainbow text effect
+rainbow_text() {
+    local text="$1"
+    local colors=(196 208 226 118 51 21 93 201)
+    for ((i=0; i<${#text}; i++)); do
+        local color=${colors[$((i % 8))]}
+        echo -en "\033[38;5;${color}m${text:$i:1}"
+        sleep 0.01
+    done
+    echo -e "${NC}"
+}
+
+# Glitch effect
+glitch_text() {
+    local text="$1"
+    local glitch_chars='@#$%^&*!~'
+    echo -en "${CYAN}"
+    for i in {1..3}; do
+        for ((j=0; j<${#text}; j++)); do
+            if [ $((RANDOM % 5)) -eq 0 ]; then
+                echo -en "${glitch_chars:$((RANDOM % ${#glitch_chars})):1}"
+            else
+                echo -en "${text:$j:1}"
+            fi
+        done
+        echo -en "\r"
+        sleep 0.05
+    done
+    echo -e "$text${NC}"
+}
+
+# Matrix rain effect (brief)
+matrix_effect() {
+    local duration=1
+    local end=$((SECONDS + duration))
+    while [ $SECONDS -lt $end ]; do
+        local col=$((RANDOM % TERM_WIDTH))
+        local char=$((RANDOM % 2))
+        tput cup $((RANDOM % (TERM_HEIGHT - 5))) $col
+        echo -e "${NEON_GREEN}${char}${NC}"
+    done
     clear
 }
 
-# Typewriter effect
-typewriter() {
-    text="$1"
-    delay="${2:-0.03}"
-    for ((i=0; i<${#text}; i++)); do
-        echo -n "${text:$i:1}"
-        sleep "$delay"
+# Pulse animation
+pulse_text() {
+    local text="$1"
+    local color="$2"
+    for intensity in {1..3} {3..1}; do
+        tput cup $((TERM_HEIGHT / 2)) $(((TERM_WIDTH - ${#text}) / 2))
+        case $intensity in
+            1) echo -e "${DIM}${color}${text}${NC}" ;;
+            2) echo -e "${color}${text}${NC}" ;;
+            3) echo -e "${BOLD}${color}${text}${NC}" ;;
+        esac
+        sleep 0.1
     done
-    echo
 }
 
-# Center text function
+# Typewriter with variable speed
+typewriter() {
+    local text="$1"
+    local speed="${2:-$MEDIUM}"
+    local color="${3:-$WHITE}"
+    echo -en "${color}"
+    for ((i=0; i<${#text}; i++)); do
+        echo -n "${text:$i:1}"
+        sleep "$speed"
+    done
+    echo -e "${NC}"
+}
+
+# Center text with padding
 center_text() {
     local text="$1"
-    local width=$(tput cols)
-    local padding=$(( (width - ${#text}) / 2 ))
+    local padding=$(((TERM_WIDTH - ${#text}) / 2))
     printf "%${padding}s%s\n" "" "$text"
 }
 
-# Animated header
-show_header() {
-    clear_screen
+# Box drawing with animation
+draw_box() {
+    local width=$1
+    local height=$2
+    local title="$3"
+    local start_x=$(((TERM_WIDTH - width) / 2))
+    local start_y=$(((TERM_HEIGHT - height) / 2))
+    
+    # Top border
+    tput cup $start_y $start_x
+    echo -en "${CYAN}╔"
+    for ((i=0; i<width-2; i++)); do
+        echo -n "═"
+        sleep 0.002
+    done
+    echo "╗${NC}"
+    
+    # Title
+    if [ -n "$title" ]; then
+        tput cup $start_y $((start_x + (width - ${#title}) / 2 - 1))
+        echo -e "${BOLD}${GOLD} $title ${NC}"
+    fi
+    
+    # Sides
+    for ((i=1; i<height-1; i++)); do
+        tput cup $((start_y + i)) $start_x
+        echo -en "${CYAN}║"
+        tput cup $((start_y + i)) $((start_x + width - 1))
+        echo -e "║${NC}"
+    done
+    
+    # Bottom border
+    tput cup $((start_y + height - 1)) $start_x
+    echo -en "${CYAN}╚"
+    for ((i=0; i<width-2; i++)); do
+        echo -n "═"
+    done
+    echo "╝${NC}"
+}
+
+# Progress bar animation
+progress_bar() {
+    local duration=$1
+    local width=50
+    local progress=0
+    echo -en "\n${CYAN}"
+    center_text "Initializing System..."
+    echo
+    local padding=$(((TERM_WIDTH - width - 2) / 2))
+    printf "%${padding}s" ""
+    echo -n "["
+    
+    while [ $progress -lt $width ]; do
+        echo -n "█"
+        progress=$((progress + 1))
+        sleep $(awk "BEGIN {print $duration/$width}")
+    done
+    echo -e "]${NC}\n"
+}
+
+# Particle explosion effect
+explosion_effect() {
+    local center_x=$((TERM_WIDTH / 2))
+    local center_y=$((TERM_HEIGHT / 2))
+    
+    for radius in {1..15}; do
+        for angle in {0..360..30}; do
+            local x=$((center_x + radius * $(echo "c($angle * 3.14159 / 180)" | bc -l | cut -d. -f1)))
+            local y=$((center_y + radius * $(echo "s($angle * 3.14159 / 180)" | bc -l | cut -d. -f1) / 2))
+            if [ $x -gt 0 ] && [ $x -lt $TERM_WIDTH ] && [ $y -gt 0 ] && [ $y -lt $TERM_HEIGHT ]; then
+                tput cup $y $x 2>/dev/null
+                echo -e "${NEON_PINK}*${NC}"
+            fi
+        done
+        sleep 0.05
+    done
+}
+
+# Epic animated header
+show_epic_header() {
+    clear_fade
+    
+    # Matrix effect intro
+    echo -e "${NEON_GREEN}${BOLD}"
+    center_text "INITIALIZING..."
+    sleep 0.5
+    matrix_effect
+    
+    # Main logo with glitch
+    clear
     echo
     echo
+    echo -e "${NEON_BLUE}${BOLD}"
+    center_text "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓"
+    sleep 0.1
+    
     echo -e "${CYAN}${BOLD}"
     center_text "██╗     ██╗███╗   ██╗██╗   ██╗██╗  ██╗"
     center_text "██║     ██║████╗  ██║██║   ██║╚██╗██╔╝"
@@ -48,166 +229,459 @@ show_header() {
     center_text "██║     ██║██║╚██╗██║██║   ██║ ██╔██╗ "
     center_text "███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗"
     center_text "╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝"
-    echo -e "${NC}"
-    echo
-    echo -e "${MAGENTA}${BOLD}"
-    center_text "════════════════════════════════════════"
-    echo -e "${NC}"
-    echo
-    echo -e "${WHITE}${BOLD}"
-    center_text "CREATED BY MARIWAN"
-    echo -e "${NC}"
-    echo
-    sleep 1.5
-}
-
-# Main menu with typewriter effect
-show_menu() {
-    clear_screen
-    show_header
     
-    echo -e "${GREEN}${BOLD}"
-    typewriter "╔════════════════════════════════════════════════════╗" 0.01
-    typewriter "║          SELECT A LINUX DISTRIBUTION               ║" 0.01
-    typewriter "╚════════════════════════════════════════════════════╝" 0.01
+    echo -e "${NEON_PURPLE}${BOLD}"
+    center_text "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "${NC}"
+    
+    # Animated subtitle
+    echo -e "${GOLD}${BOLD}"
+    tput cup $((TERM_HEIGHT / 2)) 0
+    rainbow_text "$(center_text '⚡ THE ULTIMATE LINUX DISTRIBUTION EXPLORER ⚡')"
+    
+    echo
+    echo -e "${NEON_PINK}${BOLD}"
+    center_text "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo -e "${NC}"
     echo
     
-    echo -e "${CYAN}${BOLD}  1)${NC} ${WHITE}Kali Linux${NC}        ${DIM}- Penetration Testing Powerhouse${NC}"
-    echo -e "${CYAN}${BOLD}  2)${NC} ${WHITE}Arch Linux${NC}        ${DIM}- Ultimate Customization Freedom${NC}"
-    echo -e "${CYAN}${BOLD}  3)${NC} ${WHITE}Parrot OS${NC}         ${DIM}- Security & Privacy Focused${NC}"
-    echo -e "${CYAN}${BOLD}  4)${NC} ${WHITE}Ubuntu${NC}            ${DIM}- User-Friendly Powerhouse${NC}"
-    echo -e "${CYAN}${BOLD}  5)${NC} ${WHITE}Fedora${NC}            ${DIM}- Cutting-Edge Innovation${NC}"
-    echo -e "${CYAN}${BOLD}  6)${NC} ${WHITE}Debian${NC}            ${DIM}- Rock-Solid Stability${NC}"
-    echo -e "${CYAN}${BOLD}  7)${NC} ${WHITE}Manjaro${NC}           ${DIM}- Arch Made Easy${NC}"
-    echo -e "${CYAN}${BOLD}  8)${NC} ${WHITE}Gentoo${NC}            ${DIM}- Compile Everything${NC}"
-    echo -e "${CYAN}${BOLD}  9)${NC} ${WHITE}BlackArch${NC}         ${DIM}- 2800+ Security Tools${NC}"
-    echo -e "${CYAN}${BOLD} 10)${NC} ${WHITE}Tails${NC}             ${DIM}- Anonymous & Secure${NC}"
-    echo -e "${CYAN}${BOLD} 11)${NC} ${WHITE}Alpine Linux${NC}      ${DIM}- Ultra Lightweight${NC}"
-    echo -e "${CYAN}${BOLD} 12)${NC} ${WHITE}NixOS${NC}             ${DIM}- Reproducible System${NC}"
+    # Creator credits with pulse
+    pulse_text "CREATED BY MARIWAN" "$NEON_GREEN"
+    
     echo
-    echo -e "${RED}${BOLD}  0)${NC} ${WHITE}Exit${NC}"
-    echo
-    echo -e "${YELLOW}${BOLD}════════════════════════════════════════════════════${NC}"
-    echo -n -e "${GREEN}${BOLD}Enter your choice: ${NC}"
+    echo -e "${CYAN}${DIM}"
+    center_text "⟨ Version 2.0 - Advanced Edition ⟩"
+    echo -e "${NC}"
+    
+    progress_bar 1.5
+    sleep 0.5
 }
 
-# Distribution information functions
-show_kali() {
-    clear_screen
+# Interactive menu with animations
+show_interactive_menu() {
+    clear
+    show_epic_header
+    
+    echo -e "${NEON_BLUE}${BOLD}"
+    typewriter "╔════════════════════════════════════════════════════════════════╗" $FAST "${CYAN}"
+    typewriter "║         🚀 SELECT YOUR LINUX DISTRIBUTION 🚀                   ║" $FAST "${CYAN}"
+    typewriter "╚════════════════════════════════════════════════════════════════╝" $FAST "${CYAN}"
+    echo -e "${NC}"
+    echo
+    
+    # Menu items with icons and colors
+    echo -e "${RED}${BOLD}  [1]${NC} ${NEON_PINK}🔥 Kali Linux${NC}        ${DIM}» Master of Penetration Testing${NC}"
+    echo -e "${BLUE}${BOLD}  [2]${NC} ${NEON_BLUE}⚡ Arch Linux${NC}        ${DIM}» The Purist's Choice${NC}"
+    echo -e "${CYAN}${BOLD}  [3]${NC} ${NEON_GREEN}🦜 Parrot OS${NC}         ${DIM}» Privacy & Security Beast${NC}"
+    echo -e "${MAGENTA}${BOLD}  [4]${NC} ${ORANGE}🐧 Ubuntu${NC}            ${DIM}» The People's Favorite${NC}"
+    echo -e "${BLUE}${BOLD}  [5]${NC} ${NEON_PURPLE}🎩 Fedora${NC}            ${DIM}» Cutting-Edge Innovation${NC}"
+    echo -e "${RED}${BOLD}  [6]${NC} ${RED}🔺 Debian${NC}            ${DIM}» The Universal Foundation${NC}"
+    echo -e "${GREEN}${BOLD}  [7]${NC} ${NEON_GREEN}🌿 Manjaro${NC}           ${DIM}» Arch for Humans${NC}"
+    echo -e "${MAGENTA}${BOLD}  [8]${NC} ${NEON_PURPLE}⚙️  Gentoo${NC}            ${DIM}» Compile Your Destiny${NC}"
+    echo -e "${RED}${BOLD}  [9]${NC} ${RED}☠️  BlackArch${NC}         ${DIM}» 2800+ Hacking Arsenal${NC}"
+    echo -e "${BLUE}${BOLD} [10]${NC} ${CYAN}🔒 Tails${NC}             ${DIM}» Edward Snowden's Choice${NC}"
+    echo -e "${CYAN}${BOLD} [11]${NC} ${WHITE}🏔️  Alpine Linux${NC}      ${DIM}» Minimal & Mighty${NC}"
+    echo -e "${BLUE}${BOLD} [12]${NC} ${NEON_BLUE}❄️  NixOS${NC}             ${DIM}» Time-Travel Your OS${NC}"
+    echo
+    echo -e "${YELLOW}${BOLD} [13]${NC} ${GOLD}📊 Compare Distributions${NC} ${DIM}» Side-by-Side Analysis${NC}"
+    echo -e "${YELLOW}${BOLD} [14]${NC} ${GOLD}🎯 Quiz Me${NC}           ${DIM}» Find Your Perfect Distro${NC}"
+    echo -e "${YELLOW}${BOLD} [15]${NC} ${GOLD}📚 Glossary${NC}          ${DIM}» Linux Terms Explained${NC}"
+    echo
+    echo -e "${RED}${BOLD}  [0]${NC} ${RED}❌ Exit${NC}              ${DIM}» Until Next Time${NC}"
+    echo
+    echo -e "${NEON_PINK}${BOLD}═══════════════════════════════════════════════════════════════${NC}"
+    echo -en "${NEON_GREEN}${BOLD}⟩⟩⟩ Enter your choice: ${NC}"
+}
+
+# Enhanced distro display with deep content
+show_kali_advanced() {
+    clear
     echo -e "${RED}${BOLD}"
-    echo "╔═══════════════════════════════════════════════════════════════╗"
-    echo "║                      KALI LINUX                               ║"
-    echo "╚═══════════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
+    draw_box 70 3 "KALI LINUX - PENETRATION TESTING BEAST"
+    sleep 0.3
     
-    echo -e "${CYAN}${BOLD}🔥 UNIQUE FEATURES:${NC}"
-    echo -e "${WHITE}• Pre-installed with 600+ penetration testing tools${NC}"
-    echo -e "${WHITE}• Custom kernel with wireless injection patches${NC}"
-    echo -e "${WHITE}• Forensics mode - boots without mounting drives${NC}"
-    echo -e "${WHITE}• Kali NetHunter for Android penetration testing${NC}"
-    echo -e "${WHITE}• ARM support for Raspberry Pi, Odroid, BeagleBone${NC}"
     echo
-    
-    echo -e "${YELLOW}${BOLD}🎯 KILLER TOOLS:${NC}"
-    echo -e "${GREEN}• Metasploit Framework: exploit development platform${NC}"
-    echo -e "${GREEN}• Burp Suite: web application security testing${NC}"
-    echo -e "${GREEN}• Aircrack-ng: wireless network auditing suite${NC}"
-    echo -e "${GREEN}• John the Ripper: password cracking tool${NC}"
-    echo -e "${GREEN}• Wireshark: network protocol analyzer${NC}"
-    echo -e "${GREEN}• Nmap: network discovery and security auditing${NC}"
+    echo -e "${NEON_PINK}${BOLD}═══ LEGENDARY FEATURES ═══${NC}"
+    echo -e "${WHITE}• ${CYAN}600+ Pre-installed Ethical Hacking Tools${NC}"
+    echo -e "${WHITE}• ${CYAN}Custom Kernel with Wireless Injection Patches${NC}"
+    echo -e "${WHITE}• ${CYAN}Forensics Mode - Zero Drive Mounting${NC}"
+    echo -e "${WHITE}• ${CYAN}Kali NetHunter - Android Pentesting Platform${NC}"
+    echo -e "${WHITE}• ${CYAN}ARM Support (Raspberry Pi, Odroid, BeagleBone)${NC}"
+    echo -e "${WHITE}• ${CYAN}Rolling Release - Always Bleeding Edge${NC}"
     echo
     
-    echo -e "${MAGENTA}${BOLD}💎 ADVANCED COMMANDS:${NC}"
-    echo -e "${CYAN}# Start PostgreSQL for Metasploit${NC}"
-    echo -e "${WHITE}sudo systemctl start postgresql && sudo msfdb init${NC}"
-    echo
-    echo -e "${CYAN}# WiFi monitor mode (interface wlan0)${NC}"
-    echo -e "${WHITE}sudo airmon-ng start wlan0${NC}"
-    echo
-    echo -e "${CYAN}# Scan for nearby networks${NC}"
-    echo -e "${WHITE}sudo airodump-ng wlan0mon${NC}"
-    echo
-    echo -e "${CYAN}# Create custom wordlist${NC}"
-    echo -e "${WHITE}crunch 8 12 -t @@@@%%%% -o wordlist.txt${NC}"
-    echo
-    echo -e "${CYAN}# Anonymous web browsing setup${NC}"
-    echo -e "${WHITE}proxychains firefox${NC}"
-    echo
-    echo -e "${CYAN}# Scan network for live hosts${NC}"
-    echo -e "${WHITE}nmap -sn 192.168.1.0/24${NC}"
+    echo -e "${GOLD}${BOLD}═══ ELITE TOOLSET ═══${NC}"
+    echo -e "${GREEN}⚔️  Metasploit Framework${NC}    ${DIM}- Exploit development powerhouse${NC}"
+    echo -e "${GREEN}🔍 Burp Suite Professional${NC}  ${DIM}- Web app security auditing${NC}"
+    echo -e "${GREEN}📡 Aircrack-ng Suite${NC}        ${DIM}- Wireless network penetration${NC}"
+    echo -e "${GREEN}🔑 John the Ripper${NC}          ${DIM}- Advanced password cracking${NC}"
+    echo -e "${GREEN}🦈 Wireshark${NC}                ${DIM}- Deep packet inspection${NC}"
+    echo -e "${GREEN}🗺️  Nmap & Zenmap${NC}            ${DIM}- Network reconnaissance master${NC}"
+    echo -e "${GREEN}🕷️  SQLmap${NC}                  ${DIM}- Automated SQL injection${NC}"
+    echo -e "${GREEN}👻 Maltego${NC}                  ${DIM}- OSINT & data mining${NC}"
     echo
     
-    echo -e "${BLUE}${BOLD}📦 PACKAGE MANAGEMENT:${NC}"
-    echo -e "${WHITE}sudo apt update && sudo apt upgrade -y${NC}"
-    echo -e "${WHITE}apt-cache search [tool-name]  # Search for tools${NC}"
+    echo -e "${NEON_BLUE}${BOLD}═══ ADVANCED COMMAND ARSENAL ═══${NC}"
+    echo -e "${YELLOW}# Initialize Metasploit Database${NC}"
+    echo -e "${WHITE}sudo systemctl start postgresql${NC}"
+    echo -e "${WHITE}sudo msfdb init && msfconsole${NC}"
+    echo
+    echo -e "${YELLOW}# WiFi Hacking Workflow${NC}"
+    echo -e "${WHITE}sudo airmon-ng start wlan0                    ${DIM}# Enable monitor mode${NC}"
+    echo -e "${WHITE}sudo airodump-ng wlan0mon                     ${DIM}# Scan networks${NC}"
+    echo -e "${WHITE}sudo airodump-ng -c 6 --bssid XX:XX:XX wlan0mon -w capture${NC}"
+    echo -e "${WHITE}sudo aireplay-ng -0 10 -a XX:XX:XX wlan0mon   ${DIM}# Deauth attack${NC}"
+    echo -e "${WHITE}aircrack-ng -w wordlist.txt capture-01.cap    ${DIM}# Crack WPA${NC}"
+    echo
+    echo -e "${YELLOW}# Create Intelligent Wordlists${NC}"
+    echo -e "${WHITE}crunch 8 12 -t @@@@%%%% -o custom.txt         ${DIM}# Pattern-based${NC}"
+    echo -e "${WHITE}cewl https://target.com -d 2 -m 6 -w site.txt ${DIM}# Scrape website${NC}"
+    echo
+    echo -e "${YELLOW}# Proxy Chains for Anonymity${NC}"
+    echo -e "${WHITE}proxychains firefox                           ${DIM}# Anonymous browsing${NC}"
+    echo -e "${WHITE}proxychains nmap -sT target.com               ${DIM}# Anonymous scanning${NC}"
+    echo
+    echo -e "${YELLOW}# Advanced Network Scanning${NC}"
+    echo -e "${WHITE}nmap -sS -sV -O -A -T4 target.com             ${DIM}# Aggressive scan${NC}"
+    echo -e "${WHITE}nmap -sn 192.168.1.0/24                       ${DIM}# Live host discovery${NC}"
+    echo -e "${WHITE}nmap --script vuln target.com                 ${DIM}# Vulnerability scan${NC}"
+    echo
+    echo -e "${YELLOW}# Web Application Testing${NC}"
+    echo -e "${WHITE}sqlmap -u 'http://site.com?id=1' --dbs        ${DIM}# SQL injection${NC}"
+    echo -e "${WHITE}nikto -h http://target.com                    ${DIM}# Web server scan${NC}"
+    echo -e "${WHITE}dirb http://target.com /usr/share/wordlists/dirb/common.txt${NC}"
     echo
     
-    echo -e "${RED}${BOLD}⚡ QUICK HACKS:${NC}"
-    echo -e "${YELLOW}• Rolling release - always bleeding edge${NC}"
-    echo -e "${YELLOW}• Can run from USB without installation${NC}"
-    echo -e "${YELLOW}• Customizable with kali-tweaks utility${NC}"
+    echo -e "${NEON_PURPLE}${BOLD}═══ PRO SECRETS ═══${NC}"
+    echo -e "${MAGENTA}💡 Custom Kali Build${NC}"
+    echo -e "${WHITE}   Use ${CYAN}kali-tweaks${WHITE} for system optimization${NC}"
+    echo -e "${WHITE}   Build ISO: ${CYAN}apt install live-build && lb config${NC}"
+    echo
+    echo -e "${MAGENTA}💡 Persistence on USB${NC}"
+    echo -e "${WHITE}   Create encrypted persistence partition${NC}"
+    echo -e "${WHITE}   Survive reboots with your tools & data${NC}"
+    echo
+    echo -e "${MAGENTA}💡 Kernel Modules${NC}"
+    echo -e "${WHITE}   Custom wireless drivers pre-compiled${NC}"
+    echo -e "${WHITE}   RTL8812AU, RTL88XXAU support included${NC}"
+    echo
+    
+    echo -e "${RED}${BOLD}═══ ETHICAL HACKING MINDSET ═══${NC}"
+    echo -e "${YELLOW}⚠️  Always get written permission before testing${NC}"
+    echo -e "${YELLOW}⚠️  Understand laws: CFAA, Computer Misuse Act, etc.${NC}"
+    echo -e "${YELLOW}⚠️  Document everything for reporting${NC}"
+    echo -e "${YELLOW}⚠️  With great power comes great responsibility${NC}"
     echo
 }
 
-show_arch() {
-    clear_screen
+show_arch_advanced() {
+    clear
     echo -e "${BLUE}${BOLD}"
-    echo "╔═══════════════════════════════════════════════════════════════╗"
-    echo "║                      ARCH LINUX                               ║"
-    echo "╚═══════════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
+    draw_box 70 3 "ARCH LINUX - THE PURIST'S MASTERPIECE"
+    sleep 0.3
     
-    echo -e "${CYAN}${BOLD}🔥 UNIQUE FEATURES:${NC}"
-    echo -e "${WHITE}• Rolling release - always latest software${NC}"
-    echo -e "${WHITE}• AUR (Arch User Repository) - 80,000+ community packages${NC}"
-    echo -e "${WHITE}• Minimalist base - you build your system${NC}"
-    echo -e "${WHITE}• ArchWiki - the best Linux documentation ever${NC}"
-    echo -e "${WHITE}• KISS principle - Keep It Simple, Stupid${NC}"
     echo
-    
-    echo -e "${YELLOW}${BOLD}🎯 POWER TOOLS:${NC}"
-    echo -e "${GREEN}• pacman: lightning-fast package manager${NC}"
-    echo -e "${GREEN}• yay/paru: AUR helpers for easy access${NC}"
-    echo -e "${GREEN}• makepkg: build packages from source${NC}"
-    echo -e "${GREEN}• systemd: system and service manager${NC}"
+    echo -e "${NEON_BLUE}${BOLD}═══ PHILOSOPHY & POWER ═══${NC}"
+    echo -e "${WHITE}• ${CYAN}Rolling Release - Bleeding Edge Forever${NC}"
+    echo -e "${WHITE}• ${CYAN}AUR - 80,000+ Community Packages${NC}"
+    echo -e "${WHITE}• ${CYAN}Minimalist Base - Build Your Empire${NC}"
+    echo -e "${WHITE}• ${CYAN}ArchWiki - The Linux Bible${NC}"
+    echo -e "${WHITE}• ${CYAN}KISS Principle - Simplicity is Perfection${NC}"
+    echo -e "${WHITE}• ${CYAN}Manual Installation - Learn Everything${NC}"
     echo
     
-    echo -e "${MAGENTA}${BOLD}💎 ADVANCED COMMANDS:${NC}"
-    echo -e "${CYAN}# Update entire system${NC}"
-    echo -e "${WHITE}sudo pacman -Syu${NC}"
-    echo
-    echo -e "${CYAN}# Install AUR helper (yay)${NC}"
-    echo -e "${WHITE}git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si${NC}"
-    echo
-    echo -e "${CYAN}# Search packages in AUR${NC}"
-    echo -e "${WHITE}yay -Ss [package-name]${NC}"
-    echo
-    echo -e "${CYAN}# Remove orphaned packages${NC}"
-    echo -e "${WHITE}sudo pacman -Rns \$(pacman -Qtdq)${NC}"
-    echo
-    echo -e "${CYAN}# List explicitly installed packages${NC}"
-    echo -e "${WHITE}pacman -Qe${NC}"
-    echo
-    echo -e "${CYAN}# Clear package cache${NC}"
-    echo -e "${WHITE}sudo pacman -Sc${NC}"
+    echo -e "${GOLD}${BOLD}═══ LEGENDARY TOOLS ═══${NC}"
+    echo -e "${GREEN}⚡ pacman${NC}      ${DIM}- Lightning-fast package manager${NC}"
+    echo -e "${GREEN}🔧 yay/paru${NC}    ${DIM}- AUR helpers (community packages)${NC}"
+    echo -e "${GREEN}📦 makepkg${NC}     ${DIM}- Build packages from source${NC}"
+    echo -e "${GREEN}⚙️  systemd${NC}     ${DIM}- Modern init system${NC}"
+    echo -e "${GREEN}🔍 reflector${NC}   ${DIM}- Optimize mirror lists${NC}"
     echo
     
-    echo -e "${BLUE}${BOLD}📦 PACKAGE TIPS:${NC}"
-    echo -e "${WHITE}pacman -Ql [package]  # List all files in package${NC}"
-    echo -e "${WHITE}pacman -Qo /path/file # Find which package owns file${NC}"
-    echo -e "${WHITE}pactree [package]     # Show dependency tree${NC}"
+    echo -e "${NEON_PURPLE}${BOLD}═══ MASTER COMMANDS ═══${NC}"
+    echo -e "${YELLOW}# System Maintenance (The Arch Way)${NC}"
+    echo -e "${WHITE}sudo pacman -Syu                              ${DIM}# Full system upgrade${NC}"
+    echo -e "${WHITE}sudo pacman -Syyu                             ${DIM}# Force refresh & upgrade${NC}"
+    echo -e "${WHITE}sudo pacman -Sc                               ${DIM}# Clean package cache${NC}"
+    echo -e "${WHITE}sudo pacman -Rns \$(pacman -Qtdq)              ${DIM}# Remove orphans${NC}"
+    echo
+    echo -e "${YELLOW}# AUR Mastery${NC}"
+    echo -e "${WHITE}git clone https://aur.archlinux.org/yay.git${NC}"
+    echo -e "${WHITE}cd yay && makepkg -si                         ${DIM}# Install yay${NC}"
+    echo -e "${WHITE}yay -Syu                                      ${DIM}# Update AUR packages${NC}"
+    echo -e "${WHITE}yay -Ss package-name                          ${DIM}# Search AUR${NC}"
+    echo
+    echo -e "${YELLOW}# Package Intelligence${NC}"
+    echo -e "${WHITE}pacman -Ql package-name                       ${DIM}# List all files${NC}"
+    echo -e "${WHITE}pacman -Qo /path/to/file                      ${DIM}# Find owner${NC}"
+    echo -e "${WHITE}pactree -r package-name                       ${DIM}# Reverse dependencies${NC}"
+    echo -e "${WHITE}pacman -Qi package-name                       ${DIM}# Detailed info${NC}"
+    echo
+    echo -e "${YELLOW}# Mirror Optimization${NC}"
+    echo -e "${WHITE}sudo reflector --country US --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist${NC}"
+    echo
+    echo -e "${YELLOW}# System Backup & Recovery${NC}"
+    echo -e "${WHITE}pacman -Qqe > pkglist.txt                     ${DIM}# Backup package list${NC}"
+    echo -e "${WHITE}pacman -S --needed - < pkglist.txt            ${DIM}# Restore packages${NC}"
     echo
     
-    echo -e "${RED}${BOLD}⚡ ARCH PHILOSOPHY:${NC}"
-    echo -e "${YELLOW}• Manual installation teaches Linux internals${NC}"
-    echo -e "${YELLOW}• No bloat - install only what you need${NC}"
-    echo -e "${YELLOW}• 'btw I use Arch' - ultimate bragging rights${NC}"
+    echo -e "${NEON_GREEN}${BOLD}═══ ADVANCED SECRETS ═══${NC}"
+    echo -e "${MAGENTA}💎 Custom Kernel Compilation${NC}"
+    echo -e "${WHITE}   Download kernel from AUR: ${CYAN}linux-zen${WHITE}, ${CYAN}linux-lts${NC}"
+    echo -e "${WHITE}   Optimize for your CPU with native compilation${NC}"
+    echo
+    echo -e "${MAGENTA}💎 Arch Installation Script${NC}"
+    echo -e "${WHITE}   ${CYAN}archinstall${WHITE} - Official guided installer${NC}"
+    echo -e "${WHITE}   Still learn the manual way first!${NC}"
+    echo
+    echo -e "${MAGENTA}💎 Pacman Easter Eggs${NC}"
+    echo -e "${WHITE}   Edit ${CYAN}/etc/pacman.conf${WHITE}:${NC}"
+    echo -e "${WHITE}   Uncomment ${CYAN}Color${WHITE} and add ${CYAN}ILoveCandy${NC}"
+    echo -e "${WHITE}   Pac-Man animation during updates!${NC}"
+    echo
+    
+    echo -e "${BLUE}${BOLD}═══ THE ARCH MINDSET ═══${NC}"
+    echo -e "${CYAN}\"I use Arch btw\" ${DIM}- Not just a meme, it's a lifestyle${NC}"
+    echo -e "${CYAN}RTFM ${DIM}- Read The Fine Manual (ArchWiki)${NC}"
+    echo -e "${CYAN}DIY ${DIM}- Build exactly what you need${NC}"
+    echo -e "${CYAN}Stay Curious ${DIM}- Never stop learning${NC}"
     echo
 }
 
+# Comparison Feature
+compare_distros() {
+    clear
+    echo -e "${GOLD}${BOLD}"
+    draw_box 80 3 "DISTRIBUTION COMPARISON MATRIX"
+    sleep 0.3
+    
+    echo
+    echo -e "${CYAN}${BOLD}═══════════════════════════════════════════════════════════════════════════${NC}"
+    printf "%-15s %-12s %-12s %-15s %-20s\n" "DISTRIBUTION" "DIFFICULTY" "STABILITY" "PACKAGE MGR" "BEST FOR"
+    echo -e "${CYAN}${BOLD}═══════════════════════════════════════════════════════════════════════════${NC}"
+    
+    printf "%-15s ${NEON_PINK}%-12s${NC} ${GREEN}%-12s${NC} %-15s %-20s\n" "Kali Linux" "Intermediate" "Stable" "APT (Debian)" "Pentesting"
+    printf "%-15s ${RED}%-12s${NC} ${YELLOW}%-12s${NC} %-15s %-20s\n" "Arch Linux" "Advanced" "Rolling" "Pacman" "Power Users"
+    printf "%-15s ${NEON_PINK}%-12s${NC} ${GREEN}%-12s${NC} %-15s %-20s\n" "Parrot OS" "Intermediate" "Stable" "APT (Debian)" "Privacy/Security"
+    printf "%-15s ${GREEN}%-12s${NC} ${GREEN}%-12s${NC} %-15s %-20s\n" "Ubuntu" "Beginner" "Very Stable" "APT + Snap" "Desktop/Server"
+    printf "%-15s ${YELLOW}%-12s${NC} ${YELLOW}%-12s${NC} %-15s %-20s\n" "Fedora" "Intermediate" "Stable" "DNF" "Developers"
+    printf "%-15s ${GREEN}%-12s${NC} ${GREEN}%-12s${NC} %-15s %-20s\n" "Debian" "Intermediate" "Rock Solid" "APT" "Servers"
+    printf "%-15s ${YELLOW}%-12s${NC} ${GREEN}%-12s${NC} %-15s %-20s\n" "Manjaro" "Beginner" "Stable" "Pacman" "Arch for Beginners"
+    printf "%-15s ${RED}%-12s${NC} ${YELLOW}%-12s${NC} %-15s %-20s\n" "Gentoo" "Expert" "Rolling" "Portage" "Optimization"
+    printf "%-15s ${RED}%-12s${NC} ${YELLOW}%-12s${NC} %-15s %-20s\n" "BlackArch" "Advanced" "Rolling" "Pacman" "Security Research"
+    printf "%-15s ${YELLOW}%-12s${NC} ${GREEN}%-12s${NC} %-15s %-20s\n" "Tails" "Beginner" "Stable" "APT" "Privacy/Anonymity"
+    printf "%-15s ${GREEN}%-12s${NC} ${GREEN}%-12s${NC} %-15s %-20s\n" "Alpine" "Advanced" "Stable" "APK" "Containers"
+    printf "%-15s ${RED}%-12s${NC} ${GREEN}%-12s${NC} %-15s %-20s\n" "NixOS" "Expert" "Stable" "Nix" "DevOps/Repro"
+    
+    echo -e "${CYAN}${BOLD}═══════════════════════════════════════════════════════════════════════════${NC}"
+    echo
+}
+
+# Interactive Quiz
+distro_quiz() {
+    clear
+    echo -e "${NEON_PURPLE}${BOLD}"
+    draw_box 70 3 "FIND YOUR PERFECT LINUX DISTRIBUTION"
+    sleep 0.3
+    
+    local score_kali=0 score_arch=0 score_ubuntu=0 score_tails=0 score_gentoo=0
+    
+    echo
+    echo -e "${GOLD}${BOLD}Answer these questions to discover your ideal distro!${NC}"
+    echo
+    
+    echo -e "${CYAN}${BOLD}Q1: What's your Linux experience level?${NC}"
+    echo "  1) Complete beginner"
+    echo "  2) Some experience"
+    echo "  3) Advanced user"
+    echo "  4) Linux wizard"
+    read -p "Your answer: " q1
+    
+    case $q1 in
+        1) ((score_ubuntu+=3)); ;;
+        2) ((score_kali+=2)); ((score_ubuntu+=1)); ;;
+        3) ((score_arch+=2)); ((score_kali+=1)); ;;
+        4) ((score_gentoo+=3)); ((score_arch+=2)); ;;
+    esac
+    
+    echo
+    echo -e "${CYAN}${BOLD}Q2: What's your primary use case?${NC}"
+    echo "  1) Security testing & hacking"
+    echo "  2) Daily desktop use"
+    echo "  3) Maximum customization"
+    echo "  4) Privacy & anonymity"
+    echo "  5) Server deployment"
+    read -p "Your answer: " q2
+    
+    case $q2 in
+        1) ((score_kali+=3)); ;;
+        2) ((score_ubuntu+=3)); ;;
+        3) ((score_arch+=3)); ;;
+        4) ((score_tails+=3)); ;;
+        5) ((score_ubuntu+=2)); ;;
+    esac
+    
+    echo
+    echo -e "${CYAN}${BOLD}Q3: How much time can you invest in setup?${NC}"
+    echo "  1) Minimal - just get it working"
+    echo "  2) A few hours to customize"
+    echo "  3) Days to build from scratch"
+    echo "  4) Weeks to optimize everything"
+    read -p "Your answer: " q3
+    
+    case $q3 in
+        1) ((score_ubuntu+=3)); ;;
+        2) ((score_kali+=2)); ((score_arch+=1)); ;;
+        3) ((score_arch+=3)); ;;
+        4) ((score_gentoo+=3)); ;;
+    esac
+    
+    # Calculate winner
+    echo
+    echo -e "${NEON_GREEN}${BOLD}Analyzing your profile...${NC}"
+    progress_bar 1
+    
+    local max=0
+    local winner="Ubuntu"
+    
+    [ $score_kali -gt $max ] && max=$score_kali && winner="Kali Linux"
+    [ $score_arch -gt $max ] && max=$score_arch && winner="Arch Linux"
+    [ $score_ubuntu -gt $max ] && max=$score_ubuntu && winner="Ubuntu"
+    [ $score_tails -gt $max ] && max=$score_tails && winner="Tails"
+    [ $score_gentoo -gt $max ] && max=$score_gentoo && winner="Gentoo"
+    
+    echo
+    echo -e "${NEON_PINK}${BOLD}🎯 YOUR PERFECT MATCH: $winner 🎯${NC}"
+    echo
+    echo -e "${CYAN}Scores:${NC}"
+    echo -e "  Kali Linux: ${GOLD}$score_kali${NC}"
+    echo -e "  Arch Linux: ${GOLD}$score_arch${NC}"
+    echo -e "  Ubuntu: ${GOLD}$score_ubuntu${NC}"
+    echo -e "  Tails: ${GOLD}$score_tails${NC}"
+    echo -e "  Gentoo: ${GOLD}$score_gentoo${NC}"
+    echo
+}
+
+# Linux Glossary
+show_glossary() {
+    clear
+    echo -e "${NEON_PURPLE}${BOLD}"
+    draw_box 70 3 "LINUX TERMINOLOGY GUIDE"
+    sleep 0.3
+    
+    echo
+    echo -e "${GOLD}${BOLD}═══ ESSENTIAL TERMS ═══${NC}"
+    echo
+    echo -e "${CYAN}${BOLD}AUR (Arch User Repository)${NC}"
+    echo -e "${WHITE}  Community-driven package repository for Arch Linux${NC}"
+    echo -e "${DIM}  Contains 80,000+ packages maintained by users${NC}"
+    echo
+    echo -e "${CYAN}${BOLD}Rolling Release${NC}"
+    echo -e "${WHITE}  Continuous updates without version jumps${NC}"
+    echo -e "${DIM}  Always latest software, no major upgrades needed${NC}"
+    echo
+    echo -e "${CYAN}${BOLD}LTS (Long Term Support)${NC}"
+    echo -e "${WHITE}  Versions with extended security updates${NC}"
+    echo -e "${DIM}  Ubuntu LTS: 5 years, Debian: varies by release${NC}"
+    echo
+    echo -e "${CYAN}${BOLD}Package Manager${NC}"
+    echo -e "${WHITE}  Software that installs/updates programs${NC}"
+    echo -e "${DIM}  APT (Debian/Ubuntu), DNF (Fedora), Pacman (Arch)${NC}"
+    echo
+    echo -e "${CYAN}${BOLD}Desktop Environment${NC}"
+    echo -e "${WHITE}  Complete graphical interface (GUI)${NC}"
+    echo -e "${DIM}  GNOME, KDE Plasma, XFCE, Cinnamon, etc.${NC}"
+    echo
+    echo -e "${CYAN}${BOLD}Kernel${NC}"
+    echo -e "${WHITE}  Core of the operating system${NC}"
+    echo -e "${DIM}  Manages hardware, memory, processes${NC}"
+    echo
+    echo -e "${CYAN}${BOLD}Repository (Repo)${NC}"
+    echo -e "${WHITE}  Storage location for software packages${NC}"
+    echo -e "${DIM}  Official repos are tested and secure${NC}"
+    echo
+    echo -e "${CYAN}${BOLD}Live USB/ISO${NC}"
+    echo -e "${WHITE}  Run Linux from USB without installation${NC}"
+    echo -e "${DIM}  Perfect for testing before installing${NC}"
+    echo
+    echo -e "${CYAN}${BOLD}Root${NC}"
+    echo -e "${WHITE}  Superuser account with full system access${NC}"
+    echo -e "${DIM}  Like Administrator in Windows${NC}"
+    echo
+    echo -e "${CYAN}${BOLD}sudo${NC}"
+    echo -e "${WHITE}  Execute commands with root privileges${NC}"
+    echo -e "${DIM}  'Super User DO' - temporary admin access${NC}"
+    echo
+}
+
+# Main menu with all new features
+main_loop() {
+    while true; do
+        show_interactive_menu
+        read -r choice
+        
+        case $choice in
+            1) show_kali_advanced ;;
+            2) show_arch_advanced ;;
+            3) show_parrot_advanced ;;
+            4) show_ubuntu_advanced ;;
+            5) show_fedora_advanced ;;
+            6) show_debian_advanced ;;
+            7) show_manjaro_advanced ;;
+            8) show_gentoo_advanced ;;
+            9) show_blackarch_advanced ;;
+            10) show_tails_advanced ;;
+            11) show_alpine_advanced ;;
+            12) show_nixos_advanced ;;
+            13) compare_distros ;;
+            14) distro_quiz ;;
+            15) show_glossary ;;
+            0) 
+                clear
+                echo
+                echo -e "${NEON_GREEN}${BOLD}"
+                center_text "⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡"
+                echo
+                typewriter "$(center_text 'Thank you for using Linux-Info!')" $MEDIUM "${NEON_PINK}"
+                echo
+                typewriter "$(center_text 'May the Tux be with you! 🐧')" $MEDIUM "${CYAN}"
+                echo
+                echo -e "${GOLD}${BOLD}"
+                center_text "Created by MARIWAN"
+                echo -e "${NC}"
+                echo
+                sleep 1
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}${BOLD}Invalid choice!${NC}"
+                sleep 1
+                continue
+                ;;
+        esac
+        
+        echo
+        echo -e "${NEON_PINK}${BOLD}═══════════════════════════════════════════════════════════${NC}"
+        echo -en "${NEON_GREEN}${BOLD}⟩ Press ENTER to return to menu...${NC}"
+        read -r
+    done
+}
+
+# Placeholder functions for remaining distros (keeping original content)
+show_parrot_advanced() { show_parrot; }
+show_ubuntu_advanced() { show_ubuntu; }
+show_fedora_advanced() { show_fedora; }
+show_debian_advanced() { show_debian; }
+show_manjaro_advanced() { show_manjaro; }
+show_gentoo_advanced() { show_gentoo; }
+show_blackarch_advanced() { show_blackarch; }
+show_tails_advanced() { show_tails; }
+show_alpine_advanced() { show_alpine; }
+show_nixos_advanced() { show_nixos; }
+
+# Original distro functions (kept for compatibility)
 show_parrot() {
-    clear_screen
+    clear
     echo -e "${CYAN}${BOLD}"
     echo "╔═══════════════════════════════════════════════════════════════╗"
     echo "║                      PARROT OS                                ║"
@@ -263,7 +737,7 @@ show_parrot() {
 }
 
 show_ubuntu() {
-    clear_screen
+    clear
     echo -e "${MAGENTA}${BOLD}"
     echo "╔═══════════════════════════════════════════════════════════════╗"
     echo "║                      UBUNTU                                   ║"
@@ -320,7 +794,7 @@ show_ubuntu() {
 }
 
 show_fedora() {
-    clear_screen
+    clear
     echo -e "${BLUE}${BOLD}"
     echo "╔═══════════════════════════════════════════════════════════════╗"
     echo "║                      FEDORA                                   ║"
@@ -377,7 +851,7 @@ show_fedora() {
 }
 
 show_debian() {
-    clear_screen
+    clear
     echo -e "${RED}${BOLD}"
     echo "╔═══════════════════════════════════════════════════════════════╗"
     echo "║                      DEBIAN                                   ║"
@@ -432,7 +906,7 @@ show_debian() {
 }
 
 show_manjaro() {
-    clear_screen
+    clear
     echo -e "${GREEN}${BOLD}"
     echo "╔═══════════════════════════════════════════════════════════════╗"
     echo "║                      MANJARO                                  ║"
@@ -488,7 +962,7 @@ show_manjaro() {
 }
 
 show_gentoo() {
-    clear_screen
+    clear
     echo -e "${MAGENTA}${BOLD}"
     echo "╔═══════════════════════════════════════════════════════════════╗"
     echo "║                      GENTOO                                   ║"
@@ -544,7 +1018,7 @@ show_gentoo() {
 }
 
 show_blackarch() {
-    clear_screen
+    clear
     echo -e "${RED}${BOLD}"
     echo "╔═══════════════════════════════════════════════════════════════╗"
     echo "║                    BLACK ARCH                                 ║"
@@ -598,7 +1072,7 @@ show_blackarch() {
 }
 
 show_tails() {
-    clear_screen
+    clear
     echo -e "${BLUE}${BOLD}"
     echo "╔═══════════════════════════════════════════════════════════════╗"
     echo "║                        TAILS                                  ║"
@@ -617,196 +1091,195 @@ show_tails() {
     echo -e "${GREEN}• Tor Browser: Anonymous web browsing${NC}"
     echo -e "${GREEN}• Thunderbird: Email with OpenPGP${NC}"
     echo -e "${GREEN}• OnionShare: Share files anonymously${NC}"
-    echo -e "${GREEN}• KeePassXC: Encrypted password manager${NC}"
-    echo -e "${GREEN}• MAT2: Metadata removal tool${NC}"
+    echo -e
+
+# Fedora
+show_fedora() {
+    clear
+    echo -e "${MAGENTA}${BOLD}"
+    echo "╔═══════════════════════════════════════════════════════════════╗"
+    echo "║                      FEDORA                                   ║"
+    echo "╚═══════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+
+    echo -e "${CYAN}${BOLD}🔥 UNIQUE FEATURES:${NC}"
+    echo -e "${WHITE}• Cutting-edge packages & GNOME desktop${NC}"
+    echo -e "${WHITE}• Strong security policies (SELinux enabled)${NC}"
+    echo -e "${WHITE}• RPM package management${NC}"
+    echo -e "${WHITE}• Excellent for developers & containerization${NC}"
     echo
-    
-    echo -e "${MAGENTA}${BOLD}💎 ADVANCED FEATURES:${NC}"
-    echo -e "${CYAN}# Create persistent volume${NC}"
-    echo -e "${WHITE}Applications → Tails → Configure persistent volume${NC}"
+
+    echo -e "${YELLOW}${BOLD}🎯 POWER TOOLS:${NC}"
+    echo -e "${GREEN}• DNF: fast package manager${NC}"
+    echo -e "${GREEN}• Podman: rootless containers${NC}"
+    echo -e "${GREEN}• Fedora Silverblue: immutable OS${NC}"
     echo
-    echo -e "${CYAN}# Enable Additional Software${NC}"
-    echo -e "${WHITE}Applications → System Tools → Additional Software${NC}"
-    echo
-    echo -e "${CYAN}# MAC address spoofing${NC}"
-    echo -e "${WHITE}Enabled automatically on boot${NC}"
-    echo
-    echo -e "${CYAN}# Securely delete files${NC}"
-    echo -e "${WHITE}Right-click → Wipe${NC}"
-    echo
-    echo -e "${CYAN}# Connect to hidden services${NC}"
-    echo -e "${WHITE}Use .onion addresses in Tor Browser${NC}"
-    echo
-    
-    echo -e "${BLUE}${BOLD}📦 SECURITY MEASURES:${NC}"
-    echo -e "${WHITE}• Blocks non-Tor connections${NC}"
-    echo -e "${WHITE}• No cookies or history saved${NC}"
-    echo -e "${WHITE}• RAM-only operation${NC}"
-    echo -e "${WHITE}• Encrypted persistent storage${NC}"
-    echo
-    
-    echo -e "${RED}${BOLD}⚡ USE CASES:${NC}"
-    echo -e "${YELLOW}• Journalism in hostile countries${NC}"
-    echo -e "${YELLOW}• Whistleblowing safely${NC}"
-    echo -e "${YELLOW}• Maximum privacy${NC}"
-    echo -e "${YELLOW}• Avoid surveillance${NC}"
+
+    echo -e "${MAGENTA}${BOLD}💎 ADVANCED COMMANDS:${NC}"
+    echo -e "${WHITE}sudo dnf update${NC}"
+    echo -e "${WHITE}sudo dnf install package-name${NC}"
+    echo -e "${WHITE}rpm-ostree upgrade${NC}"
+    echo -e "${WHITE}sudo dnf copr enable username/repo${NC}"
     echo
 }
 
-show_alpine() {
-    clear_screen
+# Debian
+show_debian() {
+    clear
+    echo -e "${GREEN}${BOLD}"
+    echo "╔═══════════════════════════════════════════════════════════════╗"
+    echo "║                      DEBIAN                                   ║"
+    echo "╚═══════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+
+    echo -e "${CYAN}${BOLD}🔥 UNIQUE FEATURES:${NC}"
+    echo -e "${WHITE}• Stable, secure, and rock-solid${NC}"
+    echo -e "${WHITE}• Extensive repositories & community support${NC}"
+    echo -e "${WHITE}• Ideal for servers and long-term deployment${NC}"
+    echo
+
+    echo -e "${YELLOW}${BOLD}🎯 POWER TOOLS:${NC}"
+    echo -e "${GREEN}• APT: reliable package manager${NC}"
+    echo -e "${GREEN}• dpkg: low-level package tool${NC}"
+    echo -e "${GREEN}• Stable LTS kernels${NC}"
+    echo
+
+    echo -e "${MAGENTA}${BOLD}💎 ADVANCED COMMANDS:${NC}"
+    echo -e "${WHITE}sudo apt update && sudo apt upgrade${NC}"
+    echo -e "${WHITE}sudo apt install package-name${NC}"
+    echo -e "${WHITE}dpkg -i package.deb${NC}"
+    echo
+}
+
+# Manjaro
+show_manjaro() {
+    clear
+    echo -e "${GREEN}${BOLD}"
+    echo "╔═══════════════════════════════════════════════════════════════╗"
+    echo "║                      MANJARO                                   ║"
+    echo "╚═══════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+
+    echo -e "${CYAN}${BOLD}🔥 UNIQUE FEATURES:${NC}"
+    echo -e "${WHITE}• Arch-based but user-friendly${NC}"
+    echo -e "${WHITE}• Rolling release model with stability patches${NC}"
+    echo -e "${WHITE}• GUI tools for easier management${NC}"
+    echo
+
+    echo -e "${YELLOW}${BOLD}🎯 POWER TOOLS:${NC}"
+    echo -e "${GREEN}• pacman & pamac${NC}"
+    echo -e "${GREEN}• Access to AUR for extra packages${NC}"
+    echo -e "${GREEN}• Optimized for desktop use${NC}"
+    echo
+
+    echo -e "${MAGENTA}${BOLD}💎 ADVANCED COMMANDS:${NC}"
+    echo -e "${WHITE}sudo pacman -Syu${NC}"
+    echo -e "${WHITE}pamac update${NC}"
+    echo -e "${WHITE}pamac build package-name${NC}"
+    echo
+}
+
+# Gentoo
+show_gentoo() {
+    clear
+    echo -e "${MAGENTA}${BOLD}"
+    echo "╔═══════════════════════════════════════════════════════════════╗"
+    echo "║                      GENTOO                                   ║"
+    echo "╚═══════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+
+    echo -e "${CYAN}${BOLD}🔥 UNIQUE FEATURES:${NC}"
+    echo -e "${WHITE}• Source-based distribution for ultimate control${NC}"
+    echo -e "${WHITE}• Portage package management${NC}"
+    echo -e "${WHITE}• Optimized performance for your CPU${NC}"
+    echo
+
+    echo -e "${YELLOW}${BOLD}🎯 POWER TOOLS:${NC}"
+    echo -e "${GREEN}• emerge: package management${NC}"
+    echo -e "${GREEN}• genkernel: custom kernel builds${NC}"
+    echo
+
+    echo -e "${MAGENTA}${BOLD}💎 ADVANCED COMMANDS:${NC}"
+    echo -e "${WHITE}sudo emerge --sync${NC}"
+    echo -e "${WHITE}emerge -uDN @world${NC}"
+    echo -e "${WHITE}eselect kernel list${NC}"
+    echo
+}
+
+# BlackArch
+show_blackarch() {
+    clear
+    echo -e "${RED}${BOLD}"
+    echo "╔═══════════════════════════════════════════════════════════════╗"
+    echo "║                      BLACKARCH                                 ║"
+    echo "╚═══════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+
+    echo -e "${CYAN}${BOLD}🔥 UNIQUE FEATURES:${NC}"
+    echo -e "${WHITE}• Kali-based penetration testing powerhouse${NC}"
+    echo -e "${WHITE}• 2800+ hacking tools pre-installed${NC}"
+    echo -e "${WHITE}• Arch Linux foundation for flexibility${NC}"
+    echo
+
+    echo -e "${YELLOW}${BOLD}🎯 POWER TOOLS:${NC}"
+    echo -e "${GREEN}• pacman package management${NC}"
+    echo -e "${GREEN}• BlackArch installer scripts${NC}"
+    echo
+}
+
+# Tails
+show_tails() {
+    clear
     echo -e "${CYAN}${BOLD}"
     echo "╔═══════════════════════════════════════════════════════════════╗"
-    echo "║                    ALPINE LINUX                               ║"
+    echo "║                      TAILS                                     ║"
     echo "╚═══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
-    
+
     echo -e "${CYAN}${BOLD}🔥 UNIQUE FEATURES:${NC}"
-    echo -e "${WHITE}• Incredibly small - 8MB base image${NC}"
-    echo -e "${WHITE}• musl libc instead of glibc${NC}"
-    echo -e "${WHITE}• BusyBox for core utilities${NC}"
-    echo -e "${WHITE}• OpenRC init system${NC}"
-    echo -e "${WHITE}• Most popular Docker base image${NC}"
+    echo -e "${WHITE}• Privacy-focused, runs from USB only${NC}"
+    echo -e "${WHITE}• Tor network enforced${NC}"
+    echo -e "${WHITE}• Amnesic system: no trace left${NC}"
     echo
-    
-    echo -e "${YELLOW}${BOLD}🎯 PERFECT FOR:${NC}"
-    echo -e "${GREEN}• Docker containers${NC}"
-    echo -e "${GREEN}• Embedded systems${NC}"
-    echo -e "${GREEN}• Edge computing${NC}"
-    echo -e "${GREEN}• Routers and firewalls${NC}"
-    echo -e "${GREEN}• Kubernetes nodes${NC}"
-    echo
-    
-    echo -e "${MAGENTA}${BOLD}💎 ADVANCED COMMANDS:${NC}"
-    echo -e "${CYAN}# Package manager - apk${NC}"
-    echo -e "${WHITE}apk update && apk upgrade${NC}"
-    echo
-    echo -e "${CYAN}# Search for packages${NC}"
-    echo -e "${WHITE}apk search [package-name]${NC}"
-    echo
-    echo -e "${CYAN}# Install package${NC}"
-    echo -e "${WHITE}apk add [package-name]${NC}"
-    echo
-    echo -e "${CYAN}# Remove package${NC}"
-    echo -e "${WHITE}apk del [package-name]${NC}"
-    echo
-    echo -e "${CYAN}# List installed packages${NC}"
-    echo -e "${WHITE}apk info${NC}"
-    echo
-    echo -e "${CYAN}# Setup Alpine (post-install)${NC}"
-    echo -e "${WHITE}setup-alpine${NC}"
-    echo
-    
-    echo -e "${BLUE}${BOLD}📦 DOCKER USAGE:${NC}"
-    echo -e "${WHITE}FROM alpine:latest${NC}"
-    echo -e "${WHITE}RUN apk add --no-cache python3${NC}"
-    echo -e "${WHITE}# Smallest possible images!${NC}"
-    echo
-    
-    echo -e "${RED}${BOLD}⚡ WHY ALPINE?${NC}"
-    echo -e "${YELLOW}• Security-focused design${NC}"
-    echo -e "${YELLOW}• Minimal attack surface${NC}"
-    echo -e "${YELLOW}• Fast boot times${NC}"
-    echo -e "${YELLOW}• Resource-efficient${NC}"
+
+    echo -e "${YELLOW}${BOLD}🎯 POWER TOOLS:${NC}"
+    echo -e "${GREEN}• Tor Browser${NC}"
+    echo -e "${GREEN}• OnionShare${NC}"
+    echo -e "${GREEN}• Metadata Anonymization Tools${NC}"
     echo
 }
 
-show_nixos() {
-    clear_screen
+# Alpine
+show_alpine() {
+    clear
     echo -e "${BLUE}${BOLD}"
     echo "╔═══════════════════════════════════════════════════════════════╗"
-    echo "║                       NIX OS                                  ║"
+    echo "║                      ALPINE                                   ║"
     echo "╚═══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
-    
+
     echo -e "${CYAN}${BOLD}🔥 UNIQUE FEATURES:${NC}"
-    echo -e "${WHITE}• Declarative system configuration${NC}"
-    echo -e "${WHITE}• Reproducible builds${NC}"
-    echo -e "${WHITE}• Atomic upgrades and rollbacks${NC}"
-    echo -e "${WHITE}• 80,000+ packages${NC}"
-    echo -e "${WHITE}• Revolutionary package manager${NC}"
-    echo
-    
-    echo -e "${YELLOW}${BOLD}🎯 MIND-BLOWING CONCEPTS:${NC}"
-    echo -e "${GREEN}• One config file defines entire system${NC}"
-    echo -e "${GREEN}• Rollback to any previous state${NC}"
-    echo -e "${GREEN}• Multiple versions of same package${NC}"
-    echo -e "${GREEN}• Isolated development environments${NC}"
-    echo
-    
-    echo -e "${MAGENTA}${BOLD}💎 ADVANCED COMMANDS:${NC}"
-    echo -e "${CYAN}# Edit system configuration${NC}"
-    echo -e "${WHITE}sudo nano /etc/nixos/configuration.nix${NC}"
-    echo
-    echo -e "${CYAN}# Rebuild system${NC}"
-    echo -e "${WHITE}sudo nixos-rebuild switch${NC}"
-    echo
-    echo -e "${CYAN}# List all generations${NC}"
-    echo -e "${WHITE}nix-env --list-generations${NC}"
-    echo
-    echo -e "${CYAN}# Rollback to previous generation${NC}"
-    echo -e "${WHITE}sudo nixos-rebuild switch --rollback${NC}"
-    echo
-    echo -e "${CYAN}# Search for packages${NC}"
-    echo -e "${WHITE}nix search nixpkgs [package-name]${NC}"
-    echo
-    echo -e "${CYAN}# Create development shell${NC}"
-    echo -e "${WHITE}nix-shell -p python3 nodejs${NC}"
-    echo
-    
-    echo -e "${BLUE}${BOLD}📦 CONFIGURATION EXAMPLE:${NC}"
-    echo -e "${WHITE}{ config, pkgs, ... }:${NC}"
-    echo -e "${WHITE}{${NC}"
-    echo -e "${WHITE}  environment.systemPackages = with pkgs; [${NC}"
-    echo -e "${WHITE}    vim git firefox${NC}"
-    echo -e "${WHITE}  ];${NC}"
-    echo -e "${WHITE}}${NC}"
-    echo
-    
-    echo -e "${RED}${BOLD}⚡ REVOLUTIONARY:${NC}"
-    echo -e "${YELLOW}• Never breaks your system${NC}"
-    echo -e "${YELLOW}• Time-travel your OS${NC}"
-    echo -e "${YELLOW}• DevOps dream come true${NC}"
-    echo -e "${YELLOW}• Steep learning curve but worth it${NC}"
+    echo -e "${WHITE}• Lightweight & minimal container-friendly${NC}"
+    echo -e "${WHITE}• musl libc & BusyBox based${NC}"
+    echo -e "${WHITE}• Ideal for Docker & embedded systems${NC}"
     echo
 }
 
-# Main loop
-while true; do
-    show_menu
-    read -r choice
-    
-    case $choice in
-        1) show_kali ;;
-        2) show_arch ;;
-        3) show_parrot ;;
-        4) show_ubuntu ;;
-        5) show_fedora ;;
-        6) show_debian ;;
-        7) show_manjaro ;;
-        8) show_gentoo ;;
-        9) show_blackarch ;;
-        10) show_tails ;;
-        11) show_alpine ;;
-        12) show_nixos ;;
-        0) 
-            clear_screen
-            echo -e "${GREEN}${BOLD}"
-            typewriter "Thank you for using Linux-Info!" 0.05
-            echo -e "${CYAN}"
-            typewriter "Created by MARIWAN" 0.05
-            echo -e "${NC}"
-            exit 0
-            ;;
-        *)
-            echo -e "${RED}Invalid choice. Please try again.${NC}"
-            sleep 2
-            continue
-            ;;
-    esac
-    
+# NixOS
+show_nixos() {
+    clear
+    echo -e "${BLUE}${BOLD}"
+    echo "╔═══════════════════════════════════════════════════════════════╗"
+    echo "║                      NIXOS                                     ║"
+    echo "╚═══════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+
+    echo -e "${CYAN}${BOLD}🔥 UNIQUE FEATURES:${NC}"
+    echo -e "${WHITE}• Declarative configuration management${NC}"
+    echo -e "${WHITE}• Atomic upgrades & rollbacks${NC}"
+    echo -e "${WHITE}• Nix package manager for reproducible builds${NC}"
     echo
-    echo -e "${YELLOW}${BOLD}════════════════════════════════════════════════════${NC}"
-    echo -n -e "${GREEN}Press ENTER to return to menu...${NC}"
-    read -r
-done
+}
+
+# Start the program
+main_loop
