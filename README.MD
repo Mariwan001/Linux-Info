@@ -70,25 +70,19 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/Mariwan001/Linux-Info.git
+curl -O https://raw.githubusercontent.com/Mariwan001/Linux-Info/main/Linux-Info
 
 # Navigate to directory
 cd Linux-Info
 
-# Make executable
-chmod +x linux-info
-
 # Install system-wide
 sudo mv linux-info /usr/local/bin/
 
+# Make executable
+chmod +x linux-info
+
 # Run
 linux-info
-```
-
-### One-Line Install
-
-```bash
-curl -O https://raw.githubusercontent.com/Mariwan001/Linux-Info/main/linux-info && chmod +x linux-info && sudo mv linux-info /usr/local/bin/ && linux-info
 ```
 
 ### Distribution-Specific Install
